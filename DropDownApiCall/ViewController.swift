@@ -18,7 +18,7 @@ class ViewController: UIViewController {
     let tableViewDropDown = UITableView()
     
     var selectedButton = UIButton()
-    var dataSource = [String]()
+    var dataSource = [ListFinalYear]()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -26,12 +26,12 @@ class ViewController: UIViewController {
         tableViewDropDown.delegate = self
         tableViewDropDown.dataSource = self
         tableViewDropDown.register(CellClass.self, forCellReuseIdentifier: "Cell")
+        self.getYearList()
         
     }
 
     @IBAction func countryBtn(_ sender: Any) {
         
-        dataSource = ["Bangladesh", "India", "Japan", "Nepal", "America","Germany"]
         selectedButton = countrySelect
         addTransparentView(frames: countrySelect.frame)
     }
@@ -65,6 +65,49 @@ class ViewController: UIViewController {
     }
 
     
+    func getYearList(){
+        
+        let url = URL(string: "https://mis-api.mascoknit.com/api/v1/Attendance/getFinalYear")
+        guard let requestUrl = url else { fatalError() }
+        
+        var request = URLRequest(url: requestUrl)
+        request.httpMethod = "GET"
+        
+        // Set HTTP Request Header
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+            let task = URLSession.shared.dataTask(with: request) { (data, response, error) in
+                
+                DispatchQueue.main.async {
+                
+                    
+                    if let error = error {
+                        print("Error took place \(error)")
+                        return
+                    }
+                    guard let data = data else {return}
+
+                    do{
+                        let todoItemModel = try JSONDecoder().decode(ListFinalYearResponse.self, from: data)
+                        print("Response data:\n \(todoItemModel)")
+                        print("todoItemModel error: \(todoItemModel.error)")
+                        
+                        self.dataSource = todoItemModel._listFinalYear
+
+                        for leaveHistoryformatList in todoItemModel._listFinalYear {
+                            print("------type_finalYearNamename -----: \(leaveHistoryformatList.finalYearName)")
+                        }
+                        
+                    }catch let jsonErr{
+                        print(jsonErr)
+                   }
+                }
+        }
+     
+        task.resume()
+    }
+
 }
 
 extension ViewController: UITableViewDelegate, UITableViewDataSource {
@@ -74,7 +117,9 @@ extension ViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
-        cell.textLabel?.text = dataSource[indexPath.row]
+        
+        let MVM = dataSource[indexPath.row]
+        cell.textLabel?.text = MVM.finalYearName
         return cell
     }
     
@@ -83,7 +128,68 @@ extension ViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        selectedButton.setTitle(dataSource[indexPath.row], for: .normal)
+        let MVM = dataSource[indexPath.row]
+        selectedButton.setTitle(MVM.finalYearName, for: .normal)
+        print("----final Year Name's id---\(MVM.finalYearNo!)")
         removeTransparentView()
     }
+}
+
+
+extension ViewController {
+  
+    struct ListFinalYear: Codable {
+        var finalYearNo: Int?
+        var finalYearName: String = ""
+        var yearName: String = ""
+        
+        enum CodingKeys: String, CodingKey {
+            case finalYearNo = "finalYearNo"
+            case finalYearName = "finalYearName"
+            case yearName = "yearName"
+        }
+        
+        init(from decoder: Decoder) throws {
+
+               let container = try decoder.container(keyedBy: CodingKeys.self)
+               self.finalYearNo = try container.decodeIfPresent(Int.self, forKey: .finalYearNo) ?? 0
+               self.finalYearName = try container.decodeIfPresent(String.self, forKey: .finalYearName) ?? ""
+               self.yearName = try container.decodeIfPresent(String.self, forKey: .yearName) ?? ""
+            
+           }
+
+           func encode(to encoder: Encoder) throws {
+
+               var container = encoder.container(keyedBy: CodingKeys.self)
+               try container.encode(finalYearNo, forKey: .finalYearNo)
+               try container.encode(finalYearName, forKey: .finalYearName)
+               try container.encode(yearName, forKey: .yearName)
+           }
+    }
+    
+    struct ListFinalYearResponse: Codable {
+        var error: String = ""
+        var _listFinalYear : [ListFinalYear]
+
+        enum CodingKeys: String, CodingKey {
+            case error = "error"
+            case _listFinalYear
+        }
+        
+         init(from decoder: Decoder) throws {
+
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.error = try container.decodeIfPresent(String.self, forKey: .error) ?? ""
+                self._listFinalYear = try container.decodeIfPresent([ListFinalYear].self, forKey: ._listFinalYear) ?? []
+            }
+
+            func encode(to encoder: Encoder) throws {
+
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(error, forKey: .error)
+                try container.encode(_listFinalYear, forKey: ._listFinalYear)
+            }
+
+    }
+    
 }
