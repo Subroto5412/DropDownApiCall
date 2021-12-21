@@ -23,11 +23,11 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        self.getYearList()
+        
         tableViewDropDown.delegate = self
         tableViewDropDown.dataSource = self
         tableViewDropDown.register(CellClass.self, forCellReuseIdentifier: "Cell")
-        self.getYearList()
-        
     }
 
     @IBAction func countryBtn(_ sender: Any) {
@@ -63,7 +63,7 @@ class ViewController: UIViewController {
             self.tableViewDropDown.frame = CGRect(x: frames.origin.x, y: frames.origin.y + frames.height, width: frames.width, height: 0)
         }, completion: nil)
     }
-
+    
     func getYearList(){
         
         let url = URL(string: "https://mis-api.mascoknit.com/api/v1/Attendance/getFinalYear")
@@ -75,11 +75,11 @@ class ViewController: UIViewController {
         // Set HTTP Request Header
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
+    
             let task = URLSession.shared.dataTask(with: request) { (data, response, error) in
                 
                 DispatchQueue.main.async {
-                
+                    
                     if let error = error {
                         print("Error took place \(error)")
                         return
@@ -87,6 +87,7 @@ class ViewController: UIViewController {
                     guard let data = data else {return}
 
                     do{
+                
                         let todoItemModel = try JSONDecoder().decode(ListFinalYearResponse.self, from: data)
                         print("Response data:\n \(todoItemModel)")
                         print("todoItemModel error: \(todoItemModel.error)")
@@ -94,15 +95,14 @@ class ViewController: UIViewController {
                         self.dataSource = todoItemModel._listFinalYear
 
                         for leaveHistoryformatList in todoItemModel._listFinalYear {
-                            print("final Year Name : \(leaveHistoryformatList.finalYearName)")
+                            print("Final Year Name : \(leaveHistoryformatList.finalYearName)")
                         }
                         
                     }catch let jsonErr{
                         print(jsonErr)
+                   }
                 }
-            }
         }
-     
         task.resume()
     }
 
@@ -115,9 +115,7 @@ extension ViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
-        
-        let MVM = dataSource[indexPath.row]
-        cell.textLabel?.text = MVM.finalYearName
+        cell.textLabel?.text = dataSource[indexPath.row].finalYearName
         return cell
     }
     
@@ -126,9 +124,9 @@ extension ViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let MVM = dataSource[indexPath.row]
-        selectedButton.setTitle(MVM.finalYearName, for: .normal)
-        print("final Year id---\(MVM.finalYearNo!)")
+        
+        selectedButton.setTitle(dataSource[indexPath.row].finalYearName, for: .normal)
+        print("Final Year id: \(dataSource[indexPath.row].finalYearNo!)")
         removeTransparentView()
     }
 }
@@ -153,7 +151,6 @@ extension ViewController {
                self.finalYearNo = try container.decodeIfPresent(Int.self, forKey: .finalYearNo) ?? 0
                self.finalYearName = try container.decodeIfPresent(String.self, forKey: .finalYearName) ?? ""
                self.yearName = try container.decodeIfPresent(String.self, forKey: .yearName) ?? ""
-            
            }
 
            func encode(to encoder: Encoder) throws {
@@ -187,7 +184,6 @@ extension ViewController {
                 try container.encode(error, forKey: .error)
                 try container.encode(_listFinalYear, forKey: ._listFinalYear)
             }
-
     }
     
 }
