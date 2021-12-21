@@ -64,7 +64,6 @@ class ViewController: UIViewController {
         }, completion: nil)
     }
 
-    
     func getYearList(){
         
         let url = URL(string: "https://mis-api.mascoknit.com/api/v1/Attendance/getFinalYear")
@@ -81,7 +80,6 @@ class ViewController: UIViewController {
                 
                 DispatchQueue.main.async {
                 
-                    
                     if let error = error {
                         print("Error took place \(error)")
                         return
@@ -96,13 +94,13 @@ class ViewController: UIViewController {
                         self.dataSource = todoItemModel._listFinalYear
 
                         for leaveHistoryformatList in todoItemModel._listFinalYear {
-                            print("------type_finalYearNamename -----: \(leaveHistoryformatList.finalYearName)")
+                            print("final Year Name : \(leaveHistoryformatList.finalYearName)")
                         }
                         
                     }catch let jsonErr{
                         print(jsonErr)
-                   }
                 }
+            }
         }
      
         task.resume()
@@ -130,7 +128,7 @@ extension ViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let MVM = dataSource[indexPath.row]
         selectedButton.setTitle(MVM.finalYearName, for: .normal)
-        print("----final Year Name's id---\(MVM.finalYearNo!)")
+        print("final Year id---\(MVM.finalYearNo!)")
         removeTransparentView()
     }
 }
